@@ -5,6 +5,8 @@ Created on Mon Jul 23 15:56:49 2018
 @author: YUN
 
 normalize
+
+123
 """
 
 import numpy as np
