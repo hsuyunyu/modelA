@@ -30,7 +30,7 @@ loss_limit = 0.004
 learning_rate = 0.01
 beta = 0.0001
 epoch = 25000
-k_number = 10
+k_number = 3
 
 
 for loop in range(1):
