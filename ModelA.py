@@ -6,6 +6,7 @@ Created on 2018.09.14
 
 ImplamtROI	BeamI	DoseCup	MutiStepSigma	BeamAngleMean	BeamAngleSpread
 
+master
 """
 
 
@@ -20,7 +21,7 @@ from sklearn.model_selection import KFold, cross_val_score
 from sklearn.metrics import mean_squared_error
 
 
-INPUT_SIZE = 45
+INPUT_SIZE = 30
 HIDDEN_SIZE1 = 30
 HIDDEN_SIZE2 = 15
 #HIDDEN_SIZE3 = 20
