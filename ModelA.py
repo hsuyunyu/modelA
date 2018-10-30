@@ -209,9 +209,9 @@ for loop in range(1):
                     print('%d loss: %f' % (i, loss_value))
                     print(over_times)
                     break
-                #if i > epoch:
-                #  print('%d loss: %f' % (i, loss_value))
-                #   break
+                if i > epoch:
+                    print('%d loss: %f' % (i, loss_value))
+                    break
 
             tEnd = time.time()  # 計時結束
             print('it costs %d mins %f seconds.' % ((tEnd - tStart) // 60, (tEnd - tStart) % 60))  # 花費之時間顯示
