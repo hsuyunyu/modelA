@@ -6,45 +6,57 @@ Created on Mon Jul 23 15:56:49 2018
 
 normalize
 
-123
+StandardScaler
 """
 
 import numpy as np
 import csv
-import random
-import os
-import time
-
+from sklearn.preprocessing import StandardScaler
 
 data_input = np.genfromtxt('data_input.csv', delimiter=',')
-file1 = open('data_input_normailzed.csv', 'w', newline='')
-csvCursor = csv.writer(file1)
-
 data_output = np.genfromtxt('data_output.csv', delimiter=',')
-file2 = open('data_output_normailzed.csv', 'w', newline='')
-csvCursor2 = csv.writer(file2)
-
-# 標準化_INPUT
-diff = np.max(data_input, axis=0) - np.min(data_input, axis=0)
-data_input_min = np.min(data_input, axis=0)
-data_input_normed = ((data_input - data_input_min) / diff)
-
-for row in data_input_normed:
-    csvCursor.writerow(row)  # data_input_normailzed.csv
-
 print("data_input shape:" + str(data_input.shape))
-
-
-# 標準化_OUTPUT
-diff2 = np.max(data_output, axis=0) - np.min(data_output, axis=0)
-data_output_min = np.min(data_output, axis=0)
-data_output_normed = ((data_output - data_output_min) / diff2)
-
-for row in data_output_normed:
-    csvCursor2.writerow(row)  # data_output_normailzed.csv
-
 print("data_output shape:" + str(data_output.shape))
 
-file1.close()
-file2.close()
+# 標準化_INPUT X* = (X-X_mean)/std
+scaler = StandardScaler()
+print(scaler.fit(data_input)) #Compute the mean and std to be used for later scaling.
 
+# Fit to data, then transform it.
+data_input_normed = scaler.fit_transform(data_input)
+
+# 標準化_OUTPUT X* = (X-X_mean)/std
+scaler2 = StandardScaler()
+print(scaler2.fit(data_output))  #Compute the mean and std to be used for later scaling.
+data_output_normed = scaler2.fit_transform(data_output)
+
+with open('StandardScaler.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    writer.writerow(scaler.mean_) #樣本均值
+    writer.writerow(scaler.var_) #樣本方差
+    writer.writerow(scaler2.mean_)
+    writer.writerow(scaler2.var_)
+
+with open('data_input_normailzed.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    for row in data_input_normed:
+        writer.writerow(row)  # data_input_normailzed.csv
+
+with open('data_output_normailzed.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    for row in data_output_normed:
+        writer.writerow(row)  # data_output_normailzed.csv
+
+data_input_trans = scaler.inverse_transform(data_input_normed)
+print("data_input_trans = ")
+print(np.round(data_input_trans-data_input))
+
+data_output_trans = scaler2.inverse_transform(data_output_normed)
+print("data_output_trans = ")
+print(np.round(data_output_trans-data_output))

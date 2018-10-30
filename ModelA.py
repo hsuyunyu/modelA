@@ -18,6 +18,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
 
 INPUT_SIZE = 45
@@ -28,30 +29,82 @@ OUTPUT_SIZE = 5
 loss_limit = 0.004
 learning_rate = 0.01
 beta = 0.0001
-epoch = 25000
-k_number = 10
+epoch = 20000
+k_number = 3
+
+
+# region normalize & StandardScaler
+data_input = np.genfromtxt('data/data_input.csv', delimiter=',')
+data_output = np.genfromtxt('data/data_output.csv', delimiter=',')
+print("data_input shape:" + str(data_input.shape))
+print("data_output shape:" + str(data_output.shape))
+
+# 標準化_INPUT X* = (X-X_mean)/std
+scaler = StandardScaler()
+print(scaler.fit(data_input)) #Compute the mean and std to be used for later scaling.
+
+# Fit to data, then transform it.
+data_input_normed = scaler.fit_transform(data_input)
+
+# 標準化_OUTPUT X* = (X-X_mean)/std
+scaler2 = StandardScaler()
+print(scaler2.fit(data_output))  #Compute the mean and std to be used for later scaling.
+data_output_normed = scaler2.fit_transform(data_output)
+
+with open('data/StandardScaler.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    writer.writerow(scaler.mean_) #樣本均值
+    writer.writerow(scaler.var_) #樣本方差
+    writer.writerow(scaler2.mean_)
+    writer.writerow(scaler2.var_)
+
+with open('data/data_input_normailzed.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    for row in data_input_normed:
+        writer.writerow(row)  # data_input_normailzed.csv
+
+with open('data/data_output_normailzed.csv', 'w', newline='') as csvfile:
+    # 建立 CSV 檔寫入器
+    writer = csv.writer(csvfile)
+    # 寫入資料
+    for row in data_output_normed:
+        writer.writerow(row)  # data_output_normailzed.csv
+
+data_input_trans = scaler.inverse_transform(data_input_normed)
+print("data_input_trans = ")
+print(np.round(data_input_trans-data_input))
+
+data_output_trans = scaler2.inverse_transform(data_output_normed)
+print("data_output_trans = ")
+print(np.round(data_output_trans-data_output))
+# endregion
 
 
 for loop in range(1):
 
     # region讀取數據
-    f = open('data/data_input_normailzed.csv', 'r')
-    X = []
-    for row in csv.reader(f):
-        X.append(row)
-    f.close()
-
-    f = open('data/data_output_normailzed.csv', 'r')
-    y = []
-    for row in csv.reader(f):
-        y.append(row)
-    f.close()
+    # f = open('data/data_input_normailzed.csv', 'r')
+    # X = []
+    # for row in csv.reader(f):
+    #     X.append(row)
+    # f.close()
+    #
+    # f = open('data/data_output_normailzed.csv', 'r')
+    # y = []
+    # for row in csv.reader(f):
+    #     y.append(row)
+    # f.close()
 
     # data轉換
-    X = np.array(X)
-    y = np.array(y)
+    X = np.array(data_input_normed)
+    y = np.array(data_output_normed)
     X = X.astype(np.float)
     y = y.astype(np.float)
+    # endregion
 
     # 隨機取一定比例test
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -72,7 +125,7 @@ for loop in range(1):
     train_loss_log = []
     test_group = 1
     k_fold = KFold(n_splits=k_number, shuffle=True, random_state=1)
-    # endregion
+
 
     # 分N組資料交叉驗證
     #for train_index, validation_index in k_fold.split(X_train, y_train):
@@ -121,12 +174,12 @@ for loop in range(1):
         with tf.name_scope("layer1"):
             W1 = tf.Variable(tf.random_normal([INPUT_SIZE, HIDDEN_SIZE1]), name='layer1/W')
             b1 = tf.Variable(tf.zeros([1, HIDDEN_SIZE1]), name='layer1/b')
-            hidden_layer1 = tf.nn.softplus(tf.add(tf.matmul(xs, W1), b1))
+            hidden_layer1 = tf.nn.sigmoid(tf.add(tf.matmul(xs, W1), b1))
         # 添加 1 個隱藏層
         with tf.name_scope("layer2"):
             W2 = tf.Variable(tf.random_normal([HIDDEN_SIZE1, HIDDEN_SIZE2]), name='layer2/W')
             b2 = tf.Variable(tf.zeros([1, HIDDEN_SIZE2]), name='layer2/b')
-            hidden_layer2 = tf.nn.relu(tf.add(tf.matmul(hidden_layer1, W2), b2))
+            hidden_layer2 = tf.nn.sigmoid(tf.add(tf.matmul(hidden_layer1, W2), b2))
         # # 添加 1 個隱藏層
         # with tf.name_scope("layer3"):
         #     W3 = tf.Variable(tf.random_normal([HIDDEN_SIZE2, HIDDEN_SIZE3]), name='layer3/W')
@@ -144,7 +197,7 @@ for loop in range(1):
         # 其他方法再這裡可以找到 https://www.tensorflow.org/versions/r0.10/api_docs/python/train.html
         with tf.name_scope('Loss'):
             # L2 loss
-            l2_loss = tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2)  + tf.nn.l2_loss(W4)
+            l2_loss = tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W4)
             loss = tf.reduce_mean(tf.pow(ys - output_layer, 2)) / 2
             loss = loss + l2_loss * beta
 
@@ -209,9 +262,9 @@ for loop in range(1):
                     print('%d loss: %f' % (i, loss_value))
                     print(over_times)
                     break
-                #if i > epoch:
-                #  print('%d loss: %f' % (i, loss_value))
-                #   break
+                if i > epoch:
+                  print('%d loss: %f' % (i, loss_value))
+                  break
 
             tEnd = time.time()  # 計時結束
             print('it costs %d mins %f seconds.' % ((tEnd - tStart) // 60, (tEnd - tStart) % 60))  # 花費之時間顯示
@@ -269,16 +322,9 @@ for loop in range(1):
         data = np.genfromtxt('data/data_output.csv', delimiter=',')
 
         # 測試結果
-
-
-        diff = np.max(data, axis=0) - np.min(data, axis=0)   # 計算normalize
-        data_min = np.min(data, axis=0)
-        print('diff:', diff)
-        print('data_min:', data_min)
-
-        y_pred_convert = y_pred*diff + data_min       # convert*測試資料
-        y_test_convert = y_test*diff + data_min     # convert*真實資料
-        loss_convert = y_test_convert-y_pred_convert                   # convert*(真實資料-測試資料)
+        y_pred_convert = scaler2.inverse_transform(y_pred)  # convert*測試資料
+        y_test_convert = scaler2.inverse_transform(y_test)  # convert*真實資料
+        loss_convert = y_test_convert - y_pred_convert  # convert*(真實資料-測試資料)
 
         f = open(convert_path + "y_pred_convert.csv", "w", newline='')
         w = csv.writer(f)
